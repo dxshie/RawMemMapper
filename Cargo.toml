@@ -2,6 +2,10 @@
 name = "raw_mem_mapper"
 version = "0.1.0"
 edition = "2021"
+authors = ["dashie"]
+description = "A library for mapping raw memory to a struct"
+license = "MIT"
+repository = "https://github.com/dxshie/RawMemMapper"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
