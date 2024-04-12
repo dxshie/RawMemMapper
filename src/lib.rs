@@ -23,6 +23,7 @@ struct OffsetPadStruct {
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct CustomField {
+    attrs: Vec<Attribute>,
     offset: Option<PossibleOffsetType>,
     vis: syn::Visibility,
     ident: syn::Ident,
@@ -64,6 +65,7 @@ impl ToTokens for PossibleOffsetType {
 impl Parse for CustomField {
     fn parse(input: ParseStream) -> Result<Self> {
         Ok(CustomField {
+            attrs: input.call(Attribute::parse_outer)?,
             offset: input.parse().ok(),
             vis: input.parse()?,
             ident: input.parse()?,
@@ -119,13 +121,13 @@ impl Parse for CustomStruct {
 ///
 /// # Example
 /// ```rust
-/// const m_CBodyComponent: usize = 0x38; // CBodyComponent*
+/// const Component: usize = 0x38; // Component*
 /// struct_pad_aligned! {
-///    pub struct CBaseEntity {
-///       0x10 pub game_scene_node: usize,
+///    pub struct Entity {
+///       0x10 pub node: usize,
 ///       0x20 pub health: i32,
 ///       pub team: u8,
-///       m_CBodyComponent pub body_component: usize,
+///       Component pub component: usize,
 ///    }
 /// }
 /// ````
@@ -135,14 +137,14 @@ impl Parse for CustomStruct {
 /// ```rust
 /// #[derive(Debug, Clone, Copy)]
 /// #[repr(C)]
-/// pub struct CBaseEntity {
+/// pub struct Entity {
 ///    _pad0: [u8; 0x10],
-///   pub game_scene_node: usize,
+///   pub node: usize,
 ///   _pad1: [u8; 0x20 - (0x10 + std::mem::size_of::<usize>())],
 ///   pub health: i32,
 ///   pub team: u8,
-///   _pad2: [u8; m_CBodyComponent (0x20 + std::mem::size_of::<i32>())],
-///   pub body_component: usize,
+///   _pad2: [u8; Component (0x20 + std::mem::size_of::<i32>())],
+///   pub component: usize,
 /// }
 ///
 /// ````
@@ -200,11 +202,13 @@ fn field_mapper(
     return move |(i, field)| {
         let field_name = field.ident.clone();
         let field_type = field.ty.clone();
+        let field_annotation = field.attrs.iter().map(|attr| quote! { #attr });
         let vis = &field.vis;
         if let Some(offset) = &field.offset {
             if i == 0 {
                 return quote! {
                     _pad0: [u8; #offset],
+                    #(#field_annotation)*
                     #vis #field_name: #field_type,
                 };
             }
@@ -246,6 +250,7 @@ fn field_mapper(
                     };
                     let field = quote! {
                         #padname: [u8; #pad_info],
+                        #(#field_annotation)*
                         #vis #field_name: #field_type,
                     };
                     return field;
@@ -256,6 +261,7 @@ fn field_mapper(
                 };
                 let field = quote! {
                     #padname: [u8; #pad_info],
+                    #(#field_annotation)*
                     #vis #field_name: #field_type,
                 };
                 return field;
@@ -263,6 +269,7 @@ fn field_mapper(
 
             return quote! {
                 #padname: [u8; #offset - (#prior_offset + std::mem::size_of::<#prior_type>())],
+                #(#field_annotation)*
                 #vis #field_name: #field_type,
             };
         }
