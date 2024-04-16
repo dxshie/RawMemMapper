@@ -1,18 +1,3 @@
-[package]
-name = "raw_mem_mapper"
-version = "0.1.0"
-edition = "2021"
-authors = ["dashie"]
-description = "A library for mapping raw memory to a struct"
-license = "MIT"
-repository = "https://github.com/dxshie/RawMemMapper"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[lib]
-proc-macro = true
-
-[dependencies]
-syn = { version = "2.0", features = ["full", "printing", "extra-traits"] }
-quote = "1.0"
-proc-macro2 = "1.0"
+[workspace]
+resolver = "2"
+members = ["raw_mem_mapper", "raw_mem_mapper_utils"]

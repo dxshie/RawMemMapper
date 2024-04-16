@@ -245,11 +245,11 @@ fn field_mapper(
                 // if we found a last offset, we can calculate the size of the pad
                 if let (Some(last_offset), Some(last_offset_type)) = (last_offset, last_offset_type)
                 {
-                    let pad_info = quote! {
-                        #offset - (#last_offset + std::mem::size_of::<#last_offset_type>()) - #(#types_to_subtract)-*
-                    };
+                    // let pad_info = quote! {
+                    //     #offset - (#last_offset + std::mem::size_of::<#last_offset_type>()) - #(#types_to_subtract)-*
+                    // };
                     let field = quote! {
-                        #padname: [u8; #pad_info],
+                        #padname: [u8; raw_mem_mapper_utils::generate_padding_size_aligned(stringify!(#field_name), #offset, #last_offset, std::mem::size_of::<#last_offset_type>()) - #(#types_to_subtract)-*],
                         #(#field_annotation)*
                         #vis #field_name: #field_type,
                     };
@@ -268,7 +268,8 @@ fn field_mapper(
             }
 
             return quote! {
-                #padname: [u8; #offset - (#prior_offset + std::mem::size_of::<#prior_type>())],
+                // #padname: [u8; #offset - (#prior_offset + std::mem::size_of::<#prior_type>())],
+                #padname: [u8; raw_mem_mapper_utils::generate_padding_size_aligned(stringify!(#field_name), #offset, #prior_offset, std::mem::size_of::<#prior_type>())],
                 #(#field_annotation)*
                 #vis #field_name: #field_type,
             };
